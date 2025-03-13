@@ -140,4 +140,22 @@ class TaskController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+    public function groupedTasks(): JsonResponse
+    {
+        try {
+            $tasks = Task::with('users')->get()->groupBy('status');
+
+            return response()->json([
+                'status' => Response::HTTP_OK,
+                'message' => 'Tasks grouped by status',
+                'data' => $tasks
+            ], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
+                'error' => 'Failed to retrieve grouped tasks'
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }
