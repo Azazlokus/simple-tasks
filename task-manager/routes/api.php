@@ -11,3 +11,5 @@ Route::get('/user', function (Request $request) {
 
 Route::apiResource('users', UserController::class);
 Route::apiResource('tasks', TaskController::class);
+
+Route::middleware('throttle:2,1')->post('/tasks', [TaskController::class, 'store']);

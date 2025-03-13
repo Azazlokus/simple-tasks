@@ -6,6 +6,8 @@ use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
 use App\Models\Task;
 use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
+use Exception;
 
 class TaskController extends Controller
 {
@@ -29,6 +31,13 @@ class TaskController extends Controller
     public function store(StoreTaskRequest $request): JsonResponse
     {
         try {
+            if (User::whereIn('id', $request->assigned_users)->where('status', 'vacation')->exists()) {
+                return response()->json([
+                    'status' => Response::HTTP_UNPROCESSABLE_ENTITY,
+                    'error' => 'Cannot assign tasks to employees on vacation'
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
             $task = Task::create($request->validated());
 
             if ($request->has('assigned_users')) {
@@ -40,7 +49,7 @@ class TaskController extends Controller
                 'message' => 'Task created successfully',
                 'data' => $task
             ], Response::HTTP_CREATED);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
                 'error' => 'Failed to create task'
@@ -75,6 +84,15 @@ class TaskController extends Controller
     public function update(UpdateTaskRequest $request, Task $task): JsonResponse
     {
         try {
+            if ($request->has('assigned_users')) {
+                if (User::whereIn('id', $request->assigned_users)->where('status', 'vacation')->exists()) {
+                    return response()->json([
+                        'status' => Response::HTTP_UNPROCESSABLE_ENTITY,
+                        'error' => 'Cannot assign tasks to employees on vacation'
+                    ], Response::HTTP_UNPROCESSABLE_ENTITY);
+                }
+            }
+
             $task->update($request->validated());
 
             if ($request->has('assigned_users')) {
@@ -86,7 +104,7 @@ class TaskController extends Controller
                 'message' => 'Task updated successfully',
                 'data' => $task
             ], Response::HTTP_OK);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
                 'error' => 'Failed to update task'
