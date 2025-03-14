@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Enums\TaskStatus;
+use Illuminate\Validation\Rules\Enum;
 
 class StoreTaskRequest extends FormRequest
 {
@@ -24,7 +26,7 @@ class StoreTaskRequest extends FormRequest
         return [
             'title' => 'string|max:255',
             'description' => 'nullable|string',
-            'status' => 'in:pending,in_progress,done',
+            'status' => [new Enum(TaskStatus::class)],
             'assigned_users' => 'array',
             'assigned_users.*' => 'exists:users,id'
         ];

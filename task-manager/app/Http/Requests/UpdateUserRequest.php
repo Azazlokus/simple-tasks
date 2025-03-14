@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rules\Enum;
+use App\Enums\UserStatus;
 
 class UpdateUserRequest extends FormRequest
 {
@@ -24,7 +26,7 @@ class UpdateUserRequest extends FormRequest
         return [
             'name' => 'string|max:255',
             'email' => 'email|unique:users,email,' . $this->route('user')->id,
-            'status' => 'in:active,vacation'
+            'status' => ['sometimes', new Enum(UserStatus::class)]
         ];
     }
 

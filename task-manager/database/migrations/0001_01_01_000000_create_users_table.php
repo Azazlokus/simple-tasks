@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use App\Enums\UserStatus;
 
 return new class extends Migration
 {
@@ -15,7 +16,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
-            $table->enum('status', ['active', 'vacation'])->default('active');
+            $table->enum('status', UserStatus::values())->default(UserStatus::ACTIVE->value);
             $table->timestamps();
         });
 
