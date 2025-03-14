@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
 use App\Models\Task;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Exception;
@@ -31,18 +32,18 @@ class TaskController extends Controller
     public function store(StoreTaskRequest $request): JsonResponse
     {
         try {
-            if (User::whereIn('id', $request->assigned_users)->where('status', 'vacation')->exists()) {
+            /* if (User::whereIn('id', $request->assigned_users)->where('status', 'vacation')->exists()) {
                 return response()->json([
                     'status' => Response::HTTP_UNPROCESSABLE_ENTITY,
                     'error' => 'Cannot assign tasks to employees on vacation'
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
-            }
+            } */
 
             $task = Task::create($request->validated());
-
+/* 
             if ($request->has('assigned_users')) {
                 $task->users()->sync($request->assigned_users);
-            }
+            } */
 
             return response()->json([
                 'status' => Response::HTTP_CREATED,
