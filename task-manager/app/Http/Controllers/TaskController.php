@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateTaskRequest;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Exception;
 
@@ -15,15 +16,34 @@ class TaskController extends Controller
    /**
      * Display a listing of the resource.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $tasks = Task::with('users')->paginate(10);
+        try {
+            if ($request->query('group_by') === 'status') {
+                $tasks = Task::with('users')->get()->groupBy('status');
 
-        return response()->json([
-            'status' => Response::HTTP_OK,
-            'message' => 'Tasks retrieved successfully',
-            'data' => $tasks
-        ], Response::HTTP_OK);
+                return response()->json([
+                    'status' => Response::HTTP_OK,
+                    'message' => "Tasks grouped by status",
+                    'data' => $tasks
+                ], Response::HTTP_OK);
+            }
+
+            $tasks = Task::with('users')->paginate(10);
+
+            return response()->json([
+                'status' => Response::HTTP_OK,
+                'message' => "Tasks list",
+                'data' => $tasks
+            ], Response::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
+                'error' => 'Failed to retrieve tasks',
+                'details' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -142,7 +162,7 @@ class TaskController extends Controller
         }
     }
 
-    public function groupedTasks(): JsonResponse
+    /* public function groupedTasks(): JsonResponse
     {
         try {
             $tasks = Task::with('users')->get()->groupBy('status');
@@ -158,5 +178,5 @@ class TaskController extends Controller
                 'error' => 'Failed to retrieve grouped tasks'
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-    }
+    } */
 }
