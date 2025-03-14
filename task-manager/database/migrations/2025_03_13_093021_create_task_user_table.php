@@ -24,7 +24,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('task_user', function (Blueprint $table) {
-            //
+            Schema::dropIfExists('task_user');
         });
     }
 };
