@@ -20,6 +20,7 @@ class AssignUnassignedTasksJob implements ShouldQueue
         Log::info('AssignUnassignedTasksJob запустился');
         $tasks = Task::doesntHave('users')->get();
         $users = User::inRandomOrder()->get();
+        Log::info("Trying to assign users to unassigned tasks. Found {$tasks->count()} tasks and {$users->count()} users.");
 
         if ($tasks->isEmpty() || $users->isEmpty()) {
             return;

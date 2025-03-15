@@ -6,10 +6,13 @@ use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
 use App\Models\Task;
 use App\Models\User;
+use App\Enums\TaskStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Exception;
+use App\Notifications\TaskStatusUpdated;
+use Illuminate\Support\Facades\Log;
 
 class TaskController extends Controller
 {
@@ -105,19 +108,17 @@ class TaskController extends Controller
     public function update(UpdateTaskRequest $request, Task $task): JsonResponse
     {
         try {
-            if ($request->has('assigned_users')) {
-                if (User::whereIn('id', $request->assigned_users)->where('status', 'vacation')->exists()) {
-                    return response()->json([
-                        'status' => Response::HTTP_UNPROCESSABLE_ENTITY,
-                        'error' => 'Cannot assign tasks to employees on vacation'
-                    ], Response::HTTP_UNPROCESSABLE_ENTITY);
-                }
-            }
-
+            $oldStatus = $task->status->value; 
             $task->update($request->validated());
-
-            if ($request->has('assigned_users')) {
-                $task->users()->sync($request->assigned_users);
+            
+            $newStatus = $task->status->value;
+            
+            if ($oldStatus !== $newStatus && in_array($newStatus, [TaskStatus::IN_PROGRESS->value, TaskStatus::DONE->value])) {
+                Log::info("Task #{$task->id} status changed: {$oldStatus} → {$newStatus}");
+            
+                foreach ($task->users as $user) {
+                    $user->notify(new TaskStatusUpdated($task));
+                }
             }
 
             return response()->json([
@@ -125,14 +126,16 @@ class TaskController extends Controller
                 'message' => 'Task updated successfully',
                 'data' => $task
             ], Response::HTTP_OK);
+            
         } catch (\Exception $e) {
+            Log::error("Error updating task #{$task->id}: " . $e->getMessage());
+
             return response()->json([
                 'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
                 'error' => 'Failed to update task'
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-
     /**
      * Remove the specified resource from storage.
      */
