@@ -19,10 +19,8 @@ class UserController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $query = User::query();
-            $query = UserFilters::apply($query, $request); // 🔹 Применяем фильтры
-
-            $users = $query->paginate(10);
+            $filters = new UserFilters($request);
+            $users = $filters->apply(User::query())->paginate(10);
 
             return response()->json([
                 'status' => Response::HTTP_OK,
@@ -31,11 +29,7 @@ class UserController extends Controller
             ], Response::HTTP_OK);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
-                'error' => 'Failed to retrieve users',
-                'details' => $e->getMessage()
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return $this->errorResponse('Failed to retrieve users', $e);
         }
     }
 
@@ -44,29 +38,24 @@ class UserController extends Controller
      */
     public function store(StoreUserRequest $request): JsonResponse
     {
-        $user = User::create($request->validated());
+        try {
+            $user = User::create($request->validated());
 
-        return response()->json([
-            'status' => Response::HTTP_CREATED,
-            'message' => 'User created successfully',
-            'data' => $user
-        ], Response::HTTP_CREATED);
+            return response()->json([
+                'status' => Response::HTTP_CREATED,
+                'message' => 'User created successfully',
+                'data' => $user
+            ], Response::HTTP_CREATED);
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to create user', $e);
+        }
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id): JsonResponse
+    public function show(User $user): JsonResponse
     {
-        $user = User::find($id);
-
-        if (!$user) {
-            return response()->json([
-                'status' => Response::HTTP_NOT_FOUND,
-                'error' => 'User not found'
-            ], Response::HTTP_NOT_FOUND);
-        }
-
         return response()->json([
             'status' => Response::HTTP_OK,
             'message' => 'User retrieved successfully',
@@ -79,13 +68,17 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request, User $user): JsonResponse
     {
-        $user->update($request->validated());
+        try {
+            $user->update($request->validated());
 
-        return response()->json([
-            'status' => Response::HTTP_OK,
-            'message' => 'User updated successfully',
-            'data' => $user
-        ], Response::HTTP_OK);
+            return response()->json([
+                'status' => Response::HTTP_OK,
+                'message' => 'User updated successfully',
+                'data' => $user
+            ], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to update user', $e);
+        }
     }
 
     /**
@@ -101,10 +94,19 @@ class UserController extends Controller
                 'message' => 'User deleted successfully'
             ], Response::HTTP_NO_CONTENT);
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
-                'error' => 'Failed to delete user'
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return $this->errorResponse('Failed to delete user', $e);
         }
+    }
+
+    /**
+     * Генерирует JSON-ответ с ошибкой.
+     */
+    private function errorResponse(string $message, \Exception $e): JsonResponse
+    {
+        return response()->json([
+            'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
+            'error' => $message,
+            'details' => $e->getMessage()
+        ], Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 }

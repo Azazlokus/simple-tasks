@@ -4,13 +4,14 @@ namespace App\Filters;
 
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
+use App\Enums\TaskStatus;
 
 class TaskFilters
 {
     public static function apply(Builder $query, Request $request): Builder
     {
         if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
+            $query->where('status', TaskStatus::tryFrom($request->input('status')));
         }
 
         if ($request->filled('title')) {
@@ -24,6 +25,11 @@ class TaskFilters
             ]);
         }
 
+        return self::applySorting($query, $request);
+    }
+
+    private static function applySorting(Builder $query, Request $request): Builder
+    {
         $orderBy = $request->input('order_by', 'created_at');
         $orderDirection = $request->input('order_direction', 'desc');
 

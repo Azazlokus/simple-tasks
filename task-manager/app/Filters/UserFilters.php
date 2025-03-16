@@ -7,27 +7,59 @@ use Illuminate\Database\Eloquent\Builder;
 
 class UserFilters
 {
-    public static function apply(Builder $query, Request $request): Builder
+    private Request $request;
+    private Builder $query;
+    
+    public function __construct(Request $request)
     {
-        if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
-        }
+        $this->request = $request;
+    }
 
-        if ($request->filled('name')) {
-            $query->where('name', 'like', '%' . $request->input('name') . '%');
-        }
-        if ($request->filled('email')) {
-            $query->where('email', 'like', '%' . $request->input('email') . '%');
-        }
+    public function apply(Builder $query): Builder
+    {
+        $this->query = $query;
 
-        $orderBy = $request->input('order_by', 'created_at');
-        $orderDirection = $request->input('order_direction', 'desc');
+        return $this->filterByStatus()
+                    ->filterByName()
+                    ->filterByEmail()
+                    ->applySorting()
+                    ->query;
+    }
+
+    private function filterByStatus(): self
+    {
+        if ($this->request->filled('status')) {
+            $this->query->where('status', $this->request->input('status'));
+        }
+        return $this;
+    }
+
+    private function filterByName(): self
+    {
+        if ($this->request->filled('name')) {
+            $this->query->where('name', 'like', '%' . $this->request->input('name') . '%');
+        }
+        return $this;
+    }
+
+    private function filterByEmail(): self
+    {
+        if ($this->request->filled('email')) {
+            $this->query->where('email', 'like', '%' . $this->request->input('email') . '%');
+        }
+        return $this;
+    }
+
+    private function applySorting(): self
+    {
+        $orderBy = $this->request->input('order_by', 'created_at');
+        $orderDirection = $this->request->input('order_direction', 'desc');
 
         if (in_array($orderBy, ['id', 'name', 'email', 'status', 'created_at', 'updated_at']) &&
             in_array($orderDirection, ['asc', 'desc'])) {
-            $query->orderBy($orderBy, $orderDirection);
+            $this->query->orderBy($orderBy, $orderDirection);
         }
 
-        return $query;
+        return $this;
     }
 }
