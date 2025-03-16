@@ -20,8 +20,6 @@ cd task-manager
 
 ### 📌 2. Создание .env файла
 ```sh
-Копировать
-Редактировать
 cp .env.example .env
 php artisan key:generate
 ```
