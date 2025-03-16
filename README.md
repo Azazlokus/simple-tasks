@@ -14,8 +14,8 @@ Task Manager API – это RESTful API для управления задача
 
 ### 📥 1. Клонирование репозитория
 ```sh
-https://github.com/Azazlokus/simple-tasks
-cd task-manager
+git clone https://github.com/Azazlokus/simple-tasks
+cd simple-tasks/task-manager
 ```
 
 ### 📌 2. Создание .env файла
