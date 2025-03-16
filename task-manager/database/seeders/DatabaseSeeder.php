@@ -2,9 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\Task;
+use App\Models\User;
+use App\Models\Role;
 
 class DatabaseSeeder extends Seeder
 {
@@ -13,11 +15,15 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $this->call(RoleSeeder::class);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        User::factory(20)->create()->each(function ($user) {
+            $roles = Role::inRandomOrder()->take(rand(1, 2))->pluck('id');
+            $user->roles()->attach($roles);
+        });
+        
+        Task::factory(200)->create();
+        
+        $this->call(TaskUserSeeder::class);
     }
 }
