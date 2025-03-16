@@ -4,25 +4,39 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
+use Illuminate\Http\Request;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
 use Exception;
+use App\Filters\UserFilters;
 
 class UserController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $users = User::paginate(10);
+        try {
+            $query = User::query();
+            $query = UserFilters::apply($query, $request); // 🔹 Применяем фильтры
 
-        return response()->json([
-            'status' => Response::HTTP_OK,
-            'message' => 'Users retrieved successfully',
-            'data' => $users
-        ], Response::HTTP_OK);
+            $users = $query->paginate(10);
+
+            return response()->json([
+                'status' => Response::HTTP_OK,
+                'message' => "Users list",
+                'data' => $users
+            ], Response::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
+                'error' => 'Failed to retrieve users',
+                'details' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**

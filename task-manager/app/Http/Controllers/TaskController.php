@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
 use App\Models\Task;
-use App\Models\User;
 use App\Enums\TaskStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,6 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Exception;
 use App\Notifications\TaskStatusUpdated;
 use Illuminate\Support\Facades\Log;
+use App\Filters\TaskFilters;
 
 class TaskController extends Controller
 {
@@ -22,8 +22,11 @@ class TaskController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
+            $query = Task::query()->with('users');
+            $query = TaskFilters::apply($query, $request); 
+
             if ($request->query('group_by') === 'status') {
-                $tasks = Task::with('users')->get()->groupBy('status');
+                $tasks = $query->get()->groupBy('status');
 
                 return response()->json([
                     'status' => Response::HTTP_OK,
@@ -32,7 +35,7 @@ class TaskController extends Controller
                 ], Response::HTTP_OK);
             }
 
-            $tasks = Task::with('users')->paginate(10);
+            $tasks = $query->paginate(10);
 
             return response()->json([
                 'status' => Response::HTTP_OK,
@@ -55,18 +58,10 @@ class TaskController extends Controller
     public function store(StoreTaskRequest $request): JsonResponse
     {
         try {
-            /* if (User::whereIn('id', $request->assigned_users)->where('status', 'vacation')->exists()) {
-                return response()->json([
-                    'status' => Response::HTTP_UNPROCESSABLE_ENTITY,
-                    'error' => 'Cannot assign tasks to employees on vacation'
-                ], Response::HTTP_UNPROCESSABLE_ENTITY);
-            } */
+
 
             $task = Task::create($request->validated());
-/* 
-            if ($request->has('assigned_users')) {
-                $task->users()->sync($request->assigned_users);
-            } */
+
 
             return response()->json([
                 'status' => Response::HTTP_CREATED,
@@ -164,22 +159,4 @@ class TaskController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-
-    /* public function groupedTasks(): JsonResponse
-    {
-        try {
-            $tasks = Task::with('users')->get()->groupBy('status');
-
-            return response()->json([
-                'status' => Response::HTTP_OK,
-                'message' => 'Tasks grouped by status',
-                'data' => $tasks
-            ], Response::HTTP_OK);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
-                'error' => 'Failed to retrieve grouped tasks'
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-    } */
 }
