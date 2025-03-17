@@ -15,23 +15,21 @@ Task Manager API – это RESTful API для управления задача
 ### 📥 1. Клонирование репозитория
 ```sh
 git clone https://github.com/Azazlokus/simple-tasks
-cd simple-tasks/task-manager
+cd simple-tasks
 ```
 
-### 📌 2. Создание .env файла (Linux)
-```sh
-generate_env.sh
-```
-### 📌 2. Создание .env файла (Windows)
-```sh
-generate_env.bat
-```
-### 🐳 3. Запуск в Docker
+### 🐳 2. Запуск в Docker
+
 
 ```sh
-cd ..
 docker-compose up -d --build
 ```
+### 3. Создание .env
+```
+docker-compose exec app cp .env.example .env
+docker-compose exec app php artisan key:generate
+```
+
 ### 📂 4. Выполнение миграций
 ```sh
 docker-compose exec app php artisan migrate --seed
