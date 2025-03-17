@@ -20,6 +20,7 @@ cd simple-tasks
 
 ### 🐳 2. Запуск в Docker
 
+
 ```sh
 docker-compose up -d --build
 ```
